@@ -1,5 +1,3 @@
-import { count } from "console";
-
 // Normal and NSFW animation examples
 const normalAnimationExamples = [
   {
