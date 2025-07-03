@@ -100,6 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const cooldownOverlay = document.getElementById('cooldown-overlay');
   const cooldownText = document.getElementById('cooldown-text');
   const quickPrompts = document.getElementById('quick-prompts');
+  let currentExamplePrompt = '';
   
   // State variables
   let currentMode = 'normal';
@@ -222,6 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Update input placeholder with current prompt
         setTimeout(() => {
           if (!promptInput.value.trim()) {
+            currentExamplePrompt = example.prompt;
             promptInput.placeholder = example.prompt.substring(0, 100) + "...";
           }
         }, 1000);
@@ -294,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Generate button click handler
   generateBtn.addEventListener('click', function () {
-    const prompt = promptInput.value.trim();
+    const prompt = promptInput.value.trim() || currentExamplePrompt;
 
     if (!prompt) {
       showError("Please enter a prompt to generate anime art");
@@ -332,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Simple button click handler
   simpleBtn.addEventListener('click', function() {
-    const prompt = promptInput.value.trim();
+    const prompt = promptInput.value.trim() || currentExamplePrompt;
 
     if (!prompt) {
       showError("Please enter a prompt to generate anime art");
@@ -385,6 +387,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(() => {
       generatedImage.style.transition = 'opacity 0.5s ease';
       generatedImage.style.opacity = 1;
+      scroll2Result(el);
     }, 100);
   }
 
@@ -404,11 +407,12 @@ document.addEventListener('DOMContentLoaded', function () {
           const { status, id, url, seed } = res;
           if (status !== 'SUCCESS' || !url) return;
           showResult(url, prompt);
+          updateLeftUsage();
           clearInterval(intervalId);
           setButtonLoading(false, btn, { normalText: btnText });
         })
         .catch(console.error);
-    }, 5 * 1000);
+    }, 12.5 * 1000);
     
   }
 
@@ -417,6 +421,11 @@ document.addEventListener('DOMContentLoaded', function () {
     generateBtn.click();
   });
 });
+
+function scroll2Result(el) {
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+} 
 
 const UsageLeftLocalstorage = "usage_left";
 
@@ -437,7 +446,13 @@ function setLeftUsage (count) {
 function updateLeftUsage () {
   const el = document.querySelector('#left-usage');
   if (!el) return;
-  const used = getLeftUsage()?.count || 0;
+  let { count: used = 0, prevTimestamp } = getLeftUsage() ?? {};
+  if (prevTimestamp) {
+    const prevDate = new Date(prevTimestamp);
+    const nowDate = new Date();
+    if (prevDate.getFullYear() !== nowDate.getFullYear() || prevDate.getMonth() !== nowDate.getMonth() || prevDate.getDate() !== nowDate.getDate())
+      used = 0;
+  }
   setLeftUsage(used + 1);
   el.innerHTML = 50 - used;
 }
