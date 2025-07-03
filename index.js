@@ -198,9 +198,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const imageDiv = document.createElement('div');
     imageDiv.className = `animation-image ${isInitial ? 'fade-in' : 'fade-out'}`;
     imageDiv.innerHTML = `
-                <img src="${example.image}" alt="Anime inspiration" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20"></div>
-            `;
+      <img src="${example.image}" alt="Anime inspiration" class="w-full h-full object-contain">
+    `;
 
     animationContainer.appendChild(imageDiv);
 
@@ -413,7 +412,7 @@ function updateLeftUsage () {
   const el = document.querySelector('#left-usage');
   if (!el) return;
   const used = getLeftUsage()?.count || 0;
-  setLeftUsage(count + 1);
+  setLeftUsage(used + 1);
   el.innerHTML = 50 - used;
 }
 
