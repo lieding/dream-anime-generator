@@ -1,14 +1,6 @@
 // Normal and NSFW animation examples
 const normalAnimationExamples = [
   {
-    image: 'https://civitai.com/images/79663486',
-    prompt: 'masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, scenery, colorful, rim light, backlit, cosmic sky, aurora, chaos, fashion photography of busty cute girl, (cute:1.2), intense long pink hair, long hair, choppy bangs, nebulae cosmic purple eyes, rimlit eyes, dynamic pose, bokeh, purple serafuku with big red ribbon, red annular solar eclipse halo, perfect night, fantasy background, looking at viewer, light smile, glowing star in hand, (colorful light particles:1.2), (face focus:0.7), from below, dutch angle, upper body, head tilt, BREAK, detailed background, blurry foreground, depth of field, volumetric lighting'
-  },
-  {
-    image: 'https://civitai.com/images/79663493',
-    prompt: 'masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, scenery, (dappled sunlight:1.2), rim light, backlit, dramatic shadow, 1girl, long blonde hair, blue eyes, shiny eyes, parted lips, medium breasts, puffy sleeve white dress, forest, flowers, white butterfly, looking at viewer, sideways glance, leaning side against tree, vines, green, arms, upper body, close-up, dutch angle, shiny skin, BREAK, dramatic shadow, depth of field, vignetting, volumetric lighting'
-  },
-  {
     image: 'https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/19b95c1c-a3a0-4e87-992d-e5f37e046e2c/anim=false,width=450/82448911.jpeg',
     prompt: 'masterpiece,best quality,amazing quality,newest,absurdres,highres, newest,very awa, scenery,anime, (dutch angle:1.4),from side, 1girl,solo, beautiful face, perfect eyes, detailed eyes,mature female,slim body, black hair,blunt bangs, straight hair, red eyes, sad, looking at another, looking down, large breasts,collarbone, serafuku, miniskirt, short sleeves, socks, (wet:0.8), holding umbrella, shoulder bag, squatting, pat cat, rain, wall, orange cat, dark, stormy,desaturated, ominous atmosphere, (blurry background:1.4),backlighting, blurry foreground, depth of field,dark background, dark,reflection, bokeh,shadow,'
   },
@@ -199,6 +191,7 @@ document.addEventListener('DOMContentLoaded', function () {
     imageDiv.className = `animation-image ${isInitial ? 'fade-in' : 'fade-out'}`;
     imageDiv.innerHTML = `
       <img src="${example.image}" alt="Anime inspiration" class="w-full h-full object-contain">
+      <div class="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20"></div>
     `;
 
     animationContainer.appendChild(imageDiv);
@@ -354,12 +347,23 @@ document.addEventListener('DOMContentLoaded', function () {
     errorState.classList.add('hidden');
     resultState.classList.add('hidden');
     emptyState.classList.add('hidden');
-
-    // Faster generation for simple mode
-    setTimeout(() => {
-      setButtonLoading(false, simpleBtn, { normalText: '<i class="fas fa-bolt mr-2"></i> Simple' });
-      showResult(prompt);
-    }, 1000 + Math.random() * 1000); // Random delay between 1-2 seconds
+    let jobId;
+    fetch("/api/job", {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: "NovaAnimeXL8", mode: "FAST", prompt })
+    })
+      .then(res => res.json())
+      .then(res => {
+        const { id, status } = res?.job || {};
+        if (!id || status !== 'CREATED') throw new Error('');
+        jobId = id;
+        longPollingRequest(jobId, prompt, simpleBtn, '<i class="fas fa-bolt mr-2"></i> Simple');
+      })
+      .catch(() => {
+        showError("");
+        setButtonLoading(false, simpleBtn, { normalText: '<i class="fas fa-bolt mr-2"></i> Simple' });
+      });
   });
 
   function showError(message) {
@@ -368,13 +372,11 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('error-message').textContent = message;
   }
 
-  function showResult(prompt) {
+  function showResult(imgSrc, prompt) {
     loadingState.classList.add('hidden');
     resultState.classList.remove('hidden');
-
-    // For demo, use a random sample image
-    const randomImage = sampleImages[Math.floor(Math.random() * sampleImages.length)];
-    generatedImage.src = randomImage;
+  
+    generatedImage.src = imgSrc;
     generatedImage.alt = prompt;
     generatedPrompt.textContent = `"${prompt}"`;
 
@@ -384,6 +386,30 @@ document.addEventListener('DOMContentLoaded', function () {
       generatedImage.style.transition = 'opacity 0.5s ease';
       generatedImage.style.opacity = 1;
     }, 100);
+  }
+
+  function longPollingRequest (jobId, prompt, btn, btnText) {
+    const maxTrialCnt = 60;
+    let cnt = 0;
+    const intervalId = setInterval(() => {
+      cnt++;
+      if (cnt > maxTrialCnt) {
+        clearInterval(intervalId);
+        setButtonLoading(false, btn, { normalText: btnText });
+        return;
+      }
+      fetch(`/api/job/${jobId}`)
+        .then(res => res.json())
+        .then(res => {
+          const { status, id, url, seed } = res;
+          if (status !== 'SUCCESS' || !url) return;
+          showResult(url, prompt);
+          clearInterval(intervalId);
+          setButtonLoading(false, btn, { normalText: btnText });
+        })
+        .catch(console.error);
+    }, 5 * 1000);
+    
   }
 
   // Error state try again button
