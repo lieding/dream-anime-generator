@@ -116,8 +116,6 @@ document.addEventListener('DOMContentLoaded', function () {
   normalTab.addEventListener('click', () => switchMode('normal'));
   nsfwTab.addEventListener('click', () => switchMode('nsfw'));
 
-  setLeftUsage();
-
   function switchMode(mode) {
     currentMode = mode;
     
