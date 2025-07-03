@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(() => {
       generatedImage.style.transition = 'opacity 0.5s ease';
       generatedImage.style.opacity = 1;
-      scroll2Result(el);
+      scroll2Result(resultState);
     }, 100);
   }
 
@@ -423,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function scroll2Result(el) {
   if (!el) return;
   el.scrollIntoView({ behavior: "smooth", block: "center" });
-} 
+}
 
 const UsageLeftLocalstorage = "usage_left";
 
