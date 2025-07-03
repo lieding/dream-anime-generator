@@ -312,22 +312,23 @@ document.addEventListener('DOMContentLoaded', function () {
     resultState.classList.add('hidden');
     emptyState.classList.add('hidden');
 
-    // Simulate API call with timeout
-    setTimeout(() => {
-      // For demo purposes, we'll randomly succeed or fail
-      const shouldFail = Math.random() < 0.15; // 15% chance of failure
-
-      setButtonLoading(false, generateBtn);
-
-      if (shouldFail) {
-        showError("Our servers are busy. Please try again in a moment.");
-      } else {
-        // Show result with a random sample image
-        showResult(prompt);
-        // Start cooldown after successful generation
-        startCooldown(cooldownOverlay, cooldownText);
-      }
-    }, 2000 + Math.random() * 3000); // Random delay between 2-5 seconds
+    let jobId;
+    fetch("/api/job", {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: "AnimaTensorPro", mode: "MEDIUM", prompt })
+    })
+      .then(res => res.json())
+      .then(res => {
+        const { id, status } = res?.job || {};
+        if (!id || status !== 'CREATED') throw new Error('');
+        jobId = id;
+        longPollingRequest(jobId, prompt, generateBtn, '<i class="fas fa-bolt mr-2"></i> Generate Art');
+      })
+      .catch(() => {
+        showError("");
+        setButtonLoading(false, generateBtn, { normalText: '<i class="fas fa-bolt mr-2"></i> Generate Art' });
+      });
   });
 
   // Simple button click handler
@@ -451,7 +452,7 @@ function updateLeftUsage (consumed) {
     if (prevDate.getFullYear() !== nowDate.getFullYear() || prevDate.getMonth() !== nowDate.getMonth() || prevDate.getDate() !== nowDate.getDate())
       used = 0;
   }
-  if (consumed) setLeftUsage(used + 1);
+  if (consumed) setLeftUsage(++used);
   el.innerHTML = 50 - used;
 }
 
