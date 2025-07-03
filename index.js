@@ -339,6 +339,7 @@ document.addEventListener('DOMContentLoaded', function () {
       showError("Please enter a prompt to generate anime art");
       return;
     }
+    if (isGenerating) return;
 
     // Simple generation with no cooldown and faster processing
     setButtonLoading(true, simpleBtn);
