@@ -1,4 +1,3 @@
-import { Dictionary } from "express-serve-static-core";
 import { randomUUID } from "node:crypto";
 
 export const Model = {
