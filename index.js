@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function () {
           const { status, id, url, seed } = res;
           if (status !== 'SUCCESS' || !url) return;
           showResult(url, prompt);
-          updateLeftUsage();
+          updateLeftUsage(true);
           clearInterval(intervalId);
           setButtonLoading(false, btn, { normalText: btnText });
         })
@@ -441,7 +441,7 @@ function setLeftUsage (count) {
   localStorage.setItem(UsageLeftLocalstorage, JSON.stringify({ count, prevTimestamp }));
 }
 
-function updateLeftUsage () {
+function updateLeftUsage (consumed) {
   const el = document.querySelector('#left-usage');
   if (!el) return;
   let { count: used = 0, prevTimestamp } = getLeftUsage() ?? {};
@@ -451,7 +451,7 @@ function updateLeftUsage () {
     if (prevDate.getFullYear() !== nowDate.getFullYear() || prevDate.getMonth() !== nowDate.getMonth() || prevDate.getDate() !== nowDate.getDate())
       used = 0;
   }
-  setLeftUsage(used + 1);
+  if (consumed) setLeftUsage(used + 1);
   el.innerHTML = 50 - used;
 }
 
