@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anime Dream Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/index.css"></link>
+</head>
+
+<body>
+  <div class="container mx-auto px-4 py-12">
+    <!-- Header -->
+    <header class="text-center mb-12">
+      <h1 class="text-4xl md:text-5xl font-bold text-amber-900 mb-3">
+        <i class="fas fa-moon text-amber-700 mr-2"></i>
+        Anime Dream Generator
+      </h1>
+      <p class="text-lg text-amber-800 max-w-2xl mx-auto">
+        Bring your imagination to life with beautiful anime-style artwork. Describe your vision and we'll create it for
+        you!
+      </p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto">
+      <!-- Prompt Section -->
+      <div class="bg-white bg-opacity-80 rounded-xl shadow-lg p-6 mb-8 pulse-glow">
+        <div>
+          Today, <span id="left-usage">50</span> trials left
+        </div>
+        <!-- Tab Bar -->
+        <div class="flex mb-6 bg-amber-50 rounded-lg p-1">
+          <button id="normal-tab" class="tab-button active flex-1 py-3 px-4 rounded-md text-center transition-all">
+            <i class="fas fa-star mr-2"></i> Normal
+          </button>
+          <button id="nsfw-tab" class="tab-button flex-1 py-3 px-4 rounded-md text-center transition-all">
+            <i class="fas fa-fire mr-2"></i> NSFW
+          </button>
+        </div>
+
+        <!-- NSFW Warning -->
+        <div id="nsfw-warning" class="hidden nsfw-warning rounded-lg p-4 mb-4">
+          <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle mr-3 text-xl"></i>
+            <div>
+              <h4 class="font-semibold">18+ Content Warning</h4>
+              <p class="text-sm">You are now in NSFW mode. Content may include mature themes.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-4">
+          <div class="flex-1">
+            <label for="prompt" class="block text-amber-800 font-medium mb-2">
+              <i class="fas fa-pencil-alt mr-2"></i>Describe your anime scene
+            </label>
+            <div id="prompt-animation"
+              class="relative mb-2 h-96 rounded-lg overflow-hidden bg-gradient-to-br from-amber-50 to-amber-100">
+              <div id="animation-container" class="absolute inset-0">
+                <!-- Animation images will be inserted here -->
+              </div>
+            </div>
+            <textarea id="prompt" rows="3"
+              class="w-full px-4 py-3 rounded-lg border-2 border-amber-200 prompt-input focus:border-amber-400 focus:outline-none bg-white bg-opacity-70 text-amber-900 placeholder-amber-300"
+              placeholder="Watch the animation above for inspiration, or describe your own anime scene..."></textarea>
+          </div>
+        </div>
+        
+        <!-- Button Row -->
+        <div class="w-full mt-4 flex gap-3">
+          <div class="flex-1 relative">
+            <button id="generate-btn"
+              class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+              <span id="generate-btn-text">
+                <i class="fas fa-magic mr-2"></i> Generate Art
+              </span>
+            </button>
+            <div id="cooldown-overlay" class="cooldown-overlay hidden">
+              <span id="cooldown-text">5:00</span>
+            </div>
+          </div>
+          <button id="simple-btn"
+            class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 flex items-center justify-center">
+            <i class="fas fa-bolt mr-2"></i> Simple
+          </button>
+        </div>
+
+        <div class="mt-4 flex flex-wrap gap-3" id="quick-prompts">
+          <span class="text-sm text-amber-700 font-medium">Quick prompts:</span>
+          <!-- Prompt chips will be dynamically updated based on selected mode -->
+        </div>
+      </div>
+
+      <!-- Result Section -->
+      <div id="result-container" class="result-container rounded-xl shadow-lg overflow-hidden">
+        <div id="loading-state" class="hidden flex flex-col items-center justify-center p-12 text-center">
+          <div class="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <h3 class="text-xl font-medium text-amber-800 loading-dots">Creating your anime masterpiece</h3>
+          <p class="text-amber-700 mt-2">This usually takes about 15-30 seconds...</p>
+        </div>
+
+        <div id="error-state" class="hidden flex flex-col items-center justify-center p-12 text-center">
+          <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+            <i class="fas fa-exclamation-triangle text-amber-600 text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-medium text-amber-800 mb-2">Oops! Something went wrong</h3>
+          <p class="text-amber-700 mb-4" id="error-message">We couldn't generate your anime art. Please try again.</p>
+          <button class="bg-amber-500 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg">
+            Try Again
+          </button>
+        </div>
+
+        <div id="result-state" class="hidden">
+          <div class="p-6 bg-white bg-opacity-70">
+            <h3 class="text-lg font-medium text-amber-800 mb-2">
+              <i class="fas fa-image mr-2"></i> Your Generated Art
+            </h3>
+            <p id="generated-prompt" class="text-amber-700 italic"></p>
+          </div>
+
+          <div class="p-4 md:p-8">
+            <div class="anime-card bg-white rounded-lg shadow-md overflow-hidden max-w-2xl mx-auto">
+              <img id="generated-image" src="" alt="Generated anime art" class="w-full h-auto">
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4 mt-6">
+              <button class="flex items-center bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-lg">
+                <i class="fas fa-download mr-2"></i> Download
+              </button>
+              <button class="flex items-center bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-lg">
+                <i class="fas fa-share-alt mr-2"></i> Share
+              </button>
+              <button class="flex items-center bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-lg">
+                <i class="fas fa-redo mr-2"></i> Regenerate
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="empty-state" class="flex flex-col items-center justify-center p-12 text-center">
+          <div class="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mb-6">
+            <i class="fas fa-paint-brush text-amber-600 text-3xl"></i>
+          </div>
+          <h3 class="text-xl font-medium text-amber-800 mb-2">Your anime art awaits!</h3>
+          <p class="text-amber-700 max-w-md mx-auto">
+            Watch the animated examples above for inspiration, then describe your own anime scene and click "Generate
+            Art" to bring it to life.
+          </p>
+        </div>
+      </div>
+
+      <!-- Anime Character References -->
+      <div class="mt-12 px-4 max-w-4xl mx-auto">
+        <h3 class="text-center text-xl font-medium text-amber-800 mb-6">
+          <i class="fas fa-star mr-2"></i> Popular Anime Character References
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white bg-opacity-70 rounded-lg p-4 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="w-16 h-16 mx-auto mb-2 bg-amber-100 rounded-full flex items-center justify-center">
+              <i class="fas fa-user-ninja text-amber-600"></i>
+            </div>
+            <p class="font-medium text-amber-800">Naruto Uzumaki</p>
+            <p class="text-xs text-amber-700">"Believe it!"</p>
+          </div>
+          <div class="bg-white bg-opacity-70 rounded-lg p-4 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="w-16 h-16 mx-auto mb-2 bg-amber-100 rounded-full flex items-center justify-center">
+              <i class="fas fa-dragon text-amber-600"></i>
+            </div>
+            <p class="font-medium text-amber-800">Goku</p>
+            <p class="text-xs text-amber-700">"It's over 9000!"</p>
+          </div>
+          <div class="bg-white bg-opacity-70 rounded-lg p-4 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="w-16 h-16 mx-auto mb-2 bg-amber-100 rounded-full flex items-center justify-center">
+              <i class="fas fa-crown text-amber-600"></i>
+            </div>
+            <p class="font-medium text-amber-800">Lelouch</p>
+            <p class="text-xs text-amber-700">"All hail Britannia!"</p>
+          </div>
+          <div class="bg-white bg-opacity-70 rounded-lg p-4 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="w-16 h-16 mx-auto mb-2 bg-amber-100 rounded-full flex items-center justify-center">
+              <i class="fas fa-ghost text-amber-600"></i>
+            </div>
+            <p class="font-medium text-amber-800">Tanjiro</p>
+            <p class="text-xs text-amber-700">"Set your heart ablaze!"</p>
+          </div>
+        </div>
+        <p class="text-center text-sm text-amber-700 mt-6 italic">
+          Try including these characters in your prompts for inspiration!
+        </p>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-16 text-center text-amber-800 text-opacity-70 text-sm">
+      <p>Made with <i class="fas fa-heart text-amber-600"></i> for anime lovers</p>
+      <p class="mt-1">© 2025 Anime Dream Generator</p>
+    </footer>
+  </div>
+
+  <script src="/index.js"></script>
+</body>
+
+</html>
